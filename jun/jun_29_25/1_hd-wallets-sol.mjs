@@ -42,14 +42,22 @@ import nacl from "tweetnacl";
 // const mnemonic = generateMnemonic();
 const mnemonic = "harbor seven window bread palm obey vast slight giggle layer walnut home";
 
-const seedForBackpack = mnemonicToSeedSync(mnemonic);  //it return a buffer
+// Derive seed buffer from mnemonic
+const masterSeed = mnemonicToSeedSync(mnemonic);
 
 console.log("Mnemonic:", mnemonic);
 
-for (let i = 0; i < 4; i++) {
-  const path = `m/44'/501'/${i}'/0'`;
-  const derivedSeed = derivePath(path, seedForBackpack.toString("hex")).key; //it gives buffer for each accounts
-  const secret = nacl.sign.keyPair.fromSeed(derivedSeed).secretKey;
-  const keypair = Keypair.fromSecretKey(secret);
-  console.log(`Account ${i} Public Key:`, keypair.publicKey.toBase58());
+for (let accountIndex = 0; accountIndex < 4; accountIndex++) {
+  const derivationPath = `m/44'/501'/${accountIndex}'/0'`;
+
+  // Derive account-specific private key seed
+  const accountSeed = derivePath(derivationPath, masterSeed).key;
+
+  // Generate Ed25519 keypair from seed
+  const privateKey = nacl.sign.keyPair.fromSeed(accountSeed).secretKey;
+
+  // Create Solana-compatible Keypair
+  const solanaKeypair = Keypair.fromSecretKey(privateKey);
+
+  console.log(`Account ${accountIndex} Public Key:`, solanaKeypair.publicKey.toBase58());
 }
